@@ -1,6 +1,9 @@
 package meta
 
-import "sort"
+import (
+	"sort"
+	"github.com/KenianShi/filestore-server/db"
+)
 
 type FileMeta struct {
 	FileSha1 string
@@ -19,6 +22,12 @@ func init() {
 func UpdateFileMeta(fMeta FileMeta) { //todo 此处改成 filemeta 的所属方法比较好
 	fileMetas[fMeta.FileSha1] = fMeta
 }
+
+func UpdateFileMetaDB(fMeta FileMeta) bool{
+	return db.OnFileUploadFinished(fMeta.FileSha1,fMeta.FileName,fMeta.Location,fMeta.FileSize)
+}
+
+
 
 func GetFileMeta(fileSha1 string) FileMeta {
 	return fileMetas[fileSha1]
