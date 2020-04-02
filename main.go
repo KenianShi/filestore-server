@@ -9,7 +9,7 @@ import (
 func main() {
 	http.HandleFunc("/file/upload", handler.UploadHandler)
 	http.HandleFunc("/file/upload/success", handler.UploadSucHandler)
-	http.HandleFunc("/file/meta", handler.GetFileMetaHandler)
+	http.HandleFunc("/file/getMeta", handler.GetFileMetaHandler)
 	http.HandleFunc("/file/download",handler.DownloadHandler)
 	http.HandleFunc("/file/update",handler.FileMetaUpdateHandler)
 	http.HandleFunc("/file/delete",handler.FileDeleteHandler)

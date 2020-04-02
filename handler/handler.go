@@ -69,16 +69,20 @@ func UploadSucHandler(w http.ResponseWriter, r *http.Request) {
 //获取文件原信息
 func GetFileMetaHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	//fileHash := r.Form["filehash"][0]
 	fileHash := r.Form.Get("filehash")
-	fmeta := meta.GetFileMeta(fileHash)
-	data, err := json.Marshal(fmeta)
+	fmeta, err := meta.GetFileMetaDB(fileHash)
+	if err != nil {
+		w.Write([]byte("查询失败"))
+		return
+	}
+	data,err := json.Marshal(fmeta)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.Write(data)
 }
+
 
 func DownloadHandler(w http.ResponseWriter,r *http.Request){
 	r.ParseForm()

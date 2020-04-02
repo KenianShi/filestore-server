@@ -1,8 +1,8 @@
 package meta
 
 import (
-	"sort"
 	"github.com/KenianShi/filestore-server/db"
+	"sort"
 )
 
 type FileMeta struct {
@@ -27,11 +27,23 @@ func UpdateFileMetaDB(fMeta FileMeta) bool{
 	return db.OnFileUploadFinished(fMeta.FileSha1,fMeta.FileName,fMeta.Location,fMeta.FileSize)
 }
 
-
-
 func GetFileMeta(fileSha1 string) FileMeta {
 	return fileMetas[fileSha1]
 }
+
+func GetFileMetaDB(fileSha1 string) (*FileMeta,error){
+	var fmeta FileMeta
+	tfile,err := db.GetFileMeta(fileSha1)
+	if err != nil {
+		return &fmeta,err
+	}
+	fmeta.FileSha1 = tfile.FileHash
+	fmeta.FileSize = tfile.FileSize.Int64
+	fmeta.FileName = tfile.FileName.String
+	fmeta.Location = tfile.FileAddr.String
+	return &fmeta,nil
+}
+
 
 func GetLatestFileMetas(count int) []FileMeta {
 	fMetaArray := make([]FileMeta, len(fileMetas))
