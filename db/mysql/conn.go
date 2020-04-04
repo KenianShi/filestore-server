@@ -6,6 +6,7 @@ import (
 	"github.com/KenianShi/filestore-server/config"
 	_ "github.com/go-sql-driver/mysql"
 	"os"
+	"log"
 )
 //注意此处需要import github.com/go-sql-driver/mysql
 
@@ -32,13 +33,31 @@ func DBConn() *sql.DB {
 	return db
 }
 //
-//func ParseRows(rows *sql.Rows) []map[string]interface{} {
-//
-//}
-//
-//func checkErr(err error) {
-//	if err != nil {
-//		log.Fatal(err)
-//		panic(err)
-//	}
-//}
+func ParseRows(rows *sql.Rows) []map[string]interface{} {
+	columns,_ := rows.Columns()
+	scanArgs := make([]interface{},len(columns))
+	values := make([]interface{},len(columns))
+	for j := range values{
+		scanArgs[j] = &values[j]				//是可以对切片元素取地址的，但是不能对map元素取地址，因为hash桶的位置不明确
+	}
+	record := make(map[string]interface{})
+	records := make([]map[string]interface{},0)
+	if rows.Next(){
+		err := rows.Scan(scanArgs...)
+		checkErr(err)
+		for i,col := range values{
+			if col != nil {
+				record[columns[i]] = col
+			}
+		}
+	records = append(records,record)
+	}
+	return records
+}
+
+func checkErr(err error) {
+	if err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
+}

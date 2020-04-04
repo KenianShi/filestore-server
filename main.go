@@ -6,7 +6,8 @@ import (
 	"net/http"
 )
 
-func main() {
+func main() {	http.Handle("/static/",
+	http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))   		//静态资源加载
 	http.HandleFunc("/file/upload", handler.UploadHandler)
 	http.HandleFunc("/file/upload/success", handler.UploadSucHandler)
 	http.HandleFunc("/file/getMeta", handler.GetFileMetaHandler)
@@ -14,6 +15,10 @@ func main() {
 	http.HandleFunc("/file/update",handler.FileMetaUpdateHandler)
 	http.HandleFunc("/file/delete",handler.FileDeleteHandler)
 	http.HandleFunc("/user/signup",handler.SignupHandler)
+	http.HandleFunc("/user/signin",handler.SignInHandler)
+	http.HandleFunc("/user/info",handler.UserInfoHandler)
+
+
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
