@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"github.com/KenianShi/filestore-server/db"
+	"strconv"
 )
 
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,13 +54,20 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		fileMeta.FileSha1 = util.FileSha1(newFile)
 		//meta.UpdateFileMeta(fileMeta)
 		//UpdateFileMeteDB
-		//updatefilemeta
 		if !meta.UpdateFileMetaDB(fileMeta) {
 			w.Write([]byte("UpdateFileMetaDB error"))
 			return
 		}
 
-		http.Redirect(w, r, "/file/upload/success", http.StatusFound)
+		//TODO 更新用户文件表记录
+		r.ParseForm()
+		username := r.Form.Get("username")
+		suc := db.OnUserFileUploadFinished(username,fileMeta.FileSha1,fileMeta.FileName,fileMeta.FileSize)
+		if suc{
+			http.Redirect(w,r,"/static/view/home.html",http.StatusFound)
+		}else{
+			w.Write([]byte("Update UserFile db error"))
+		}
 	}
 }
 
@@ -76,6 +85,25 @@ func GetFileMetaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data,err := json.Marshal(fmeta)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(data)
+}
+
+func FileQueryHandler(w http.ResponseWriter,r *http.Request){
+	r.ParseForm()
+	limitCnt,_ := strconv.Atoi(r.Form.Get("limit"))
+	username := r.Form.Get("username")
+	//fileMetas,err := meta.GetLatestFileMetasDB(limitCnt)
+	fileMetas,err := db.QueryUserFileMetas(username,limitCnt)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(fileMetas)
+	data,err := json.Marshal(fileMetas)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -153,5 +181,49 @@ func FileDeleteHandler(w http.ResponseWriter,r *http.Request){
 	meta.RemoveFileMeta(fsha1)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Delete "+ name + " success"))
+}
+
+func TryFastUploadHandler(w http.ResponseWriter,r *http.Request){
+	r.ParseForm()
+	// 1. 解析请求参数
+	username := r.Form.Get("username")
+	fileHash := r.Form.Get("filehash")
+	fileName := r.Form.Get("filename")
+	filesize,_ := strconv.Atoi(r.Form.Get("filesize"))
+
+	fileMeta, err := meta.GetFileMetaDB(fileHash)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if fileMeta == nil {
+		resp := util.RespMsg{
+			Code:-1,
+			Msg:"秒传失败，请访问普通上传接口",
+		}
+		w.Write(resp.JSONBytes())
+		return
+	}
+
+	suc := db.OnUserFileUploadFinished(username,fileHash,fileName,int64(filesize))
+	resp := util.RespMsg{}
+
+	if suc{
+		resp.Code = 0
+		resp.Msg = "秒传成功"
+	}else{
+		//resp := util.RespMsg{
+		//	Code:-2,
+		//	Msg:"秒传失败，请稍后再试",
+		//}
+		resp.Code = -2
+		resp.Msg = "秒传失败，请稍后再试"
+	}
+
+	w.Write(resp.JSONBytes())
+	return
+	// 2. 从文件表中查询相同Hash的文件
+	// 3. 查找不到则返回秒传失败
+	// 4. 找到的话，则将文件信息写入用户文件信息表
 }
 

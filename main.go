@@ -10,7 +10,9 @@ func main() {	http.Handle("/static/",
 	http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))   		//静态资源加载
 	http.HandleFunc("/file/upload", handler.UploadHandler)
 	http.HandleFunc("/file/upload/success", handler.UploadSucHandler)
+	http.HandleFunc("/file/fastupload",handler.TryFastUploadHandler)
 	http.HandleFunc("/file/getMeta", handler.GetFileMetaHandler)
+	http.HandleFunc("/file/query",handler.FileQueryHandler)
 	http.HandleFunc("/file/download",handler.DownloadHandler)
 	http.HandleFunc("/file/update",handler.FileMetaUpdateHandler)
 	http.HandleFunc("/file/delete",handler.FileDeleteHandler)

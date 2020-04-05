@@ -3,6 +3,7 @@ package meta
 import (
 	"github.com/KenianShi/filestore-server/db"
 	"sort"
+	"fmt"
 )
 
 type FileMeta struct {
@@ -52,6 +53,36 @@ func GetLatestFileMetas(count int) []FileMeta {
 	}
 	sort.Sort(ByUploadTime(fMetaArray))
 	return fMetaArray[0:count] //todo 此处会存在数据越界的问题
+}
+
+func GetLatestFileMetasDB(count int) ([]FileMeta,error){
+	tfiles,err := db.GetFileMetaList(count)
+	if err != nil {
+		fmt.Println("get LatestFileMeta From DB failed")
+		return nil,err
+	}
+	var fileMetas []FileMeta
+	for _,tfile := range tfiles{
+		fileMeta := FileMeta{}
+		fileMeta.FileSha1 = tfile.FileHash
+		fileMeta.Location = tfile.FileAddr.String
+		fileMeta.FileSize = tfile.FileSize.Int64
+		fileMeta.FileName = tfile.FileName.String
+
+		fileMetas = append(fileMetas,fileMeta)
+	}
+	return fileMetas,nil
+
+	//for i:= 0;i<len(tfiles);i++{
+	//	fileMeta := FileMeta{}
+	//	fileMeta.FileSha1 = tfiles[i].FileHash
+	//	fileMeta.FileName = tfiles[i].FileName.String
+	//	fileMeta.FileSize = tfiles[i].FileSize.Int64
+	//	fileMeta.Location = tfiles[i].FileAddr.String
+	//	fileMetas = append(fileMetas,fileMeta)
+	//}
+
+
 }
 
 func RemoveFileMeta(fileSha1 string) {
