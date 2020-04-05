@@ -16,7 +16,7 @@ func main() {	http.Handle("/static/",
 	http.HandleFunc("/file/delete",handler.FileDeleteHandler)
 	http.HandleFunc("/user/signup",handler.SignupHandler)
 	http.HandleFunc("/user/signin",handler.SignInHandler)
-	http.HandleFunc("/user/info",handler.UserInfoHandler)
+	http.HandleFunc("/user/info",handler.HTTPInterceptor(handler.UserInfoHandler))
 
 
 
